@@ -32,6 +32,16 @@
 #define LCD_WR PD_3
 #define LCD_RD PE_1
 int DPINS[] = {PB_0, PB_1, PB_2, PB_3, PB_4, PB_5, PB_6, PB_7};
+
+//DEFINICION DE BOTONES DE PRUEBA
+#define PUSH1  PF_4 //SW1
+#define PUSH2  PF_0 //SW2
+
+#define B1_1 PA_6 // Boton 1 jugador 1
+#define B2_1 PA_7 // Boton 2 jugador 1
+#define B1_2 PE_3 // Boton 1 jugador 2
+#define B2_2 PF_1 // Boton 2 jugador 2
+
 //***************************************************************************************************************************************
 // Functions Prototypes
 //***************************************************************************************************************************************
@@ -53,45 +63,53 @@ void openSDformat(unsigned char L[], unsigned long SIZE, char* a);
 int ACII_HEX(char *puntero);
 void printDirectory(File dir, int numTabs);
 
-void salto(unsigned char personaje[12240]);
-void ataque_enemigo1(void);
-void ataque_enemigo2(void);
+//FUNCIONES DE ESTADOS
+void E1(void);
+void E2(void);
+void E3(void);
+void E4(void);
 
+//FUNCIONES PARA DESPLEGAR IMAGENES DE LA SD
+void obtener_titulo1(void);
+void obtener_titulo2(void);
+
+//FUNCIONES PARA MOSTRAR PANTALLAS
+void mostrar_pantalla_inicio(void);
+void mostrar_menu_principal(void);
+void mostrar_pantalla_juego(void);
+void mostrar_seleccion_jugador(void);
+
+//FUNCION PARA MOVER EL CURSOR DE SELECCION
+void mover_seleccionador(void);
+void seleccion_jugador(void);
 
 //***************************************************************************************************************************************
 // Variables Globales
 //***************************************************************************************************************************************
+//MODO MOSTRADO EN LA PANTALLA
+char modo = 0;
+
+//PANTALLA DE INICIO
+char parpadeo = 1;
+String text1;
+
+//MENU PRINCIPAL
+char one_time = 1;
+char seleccionador = 1;
+String text2, text3, text4;
+
+
+//SELECCION DE JUGADOR
+//no hay nuevas variables, pero se vuelven a utilizar text 1, text2, text3 y text4 
+
+//PANTALLA DE JUEGO
+
+
+
+
 //RUTA PARA SD
 File root;
 
-//CREACION DE VECTORES PARA IMAGENES IMPORTADAS DE LA MEMORIA SD
-//unsigned char padawan1_ataque[14688] = {0};
-//unsigned char padawan2_ataque[14688] = {0};
-//unsigned char padawan3_ataque[14688] = {0};
-//unsigned char padawan4_ataque[14688] = {0};
-
-//unsigned char padawan1_salto[12240] = {0};
-//unsigned char padawan2_salto[12240] = {0};
-//unsigned char padawan3_salto[12240] = {0};
-//unsigned char padawan4_salto[12240] = {0};
-
-unsigned char enemigo1[2640] = {0};
-unsigned char enemigo2[7680] = {0};
-
-//unsigned char titulo1[52102] = {0};
-//unsigned char titulo2[48070] = {0};
-
-//Variables de salto
-int anim;
-int h;
-
-//Variables de ataque_enemigo1
-int anim2;
-int x_e1 = 0; //este determina la posicion inicial del enemigo 1
-
-//Variables de ataque_enemigo2
-int anim3;
-int x_e2 = 0; //este determina la posicion inicial del enemigo 2
 
 //***************************************************************************************************************************************
 // Inicialización
@@ -103,12 +121,8 @@ void setup() {
   GPIOPadConfigSet(GPIO_PORTB_BASE, 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7, GPIO_STRENGTH_8MA, GPIO_PIN_TYPE_STD_WPU);
   Serial.println("Inicio");
 
-  // INICIALIZACIÓN DE LA PANTALLA
-  LCD_Init();
-  LCD_Clear(0x00);
-
   //INICIALIZACION DE LA MEMORIA SD
- pinMode(10, OUTPUT);
+  pinMode(10, OUTPUT);
 
   if (!SD.begin(32)) {
     Serial.println("initialization failed!");
@@ -123,129 +137,285 @@ void setup() {
   Serial.println("done!");
 
 
-//IMAGENES IMPORTADAS DE LA MEMORIA SD
-//openSDformat(padawan1_salto, 12241, "P1S.txt");
-//openSDformat(padawan2_salto, 12241, "P2S.txt");
-//openSDformat(padawan3_salto, 12241, "P3S.txt");
-//openSDformat(padawan4_salto, 12241, "P4S.txt");
+  // INICIALIZACIÓN DE LA PANTALLA
+  LCD_Init();
 
-//openSDformat(enemigo1, 2641, "ENEMIGO1.txt");
-//openSDformat(enemigo2, 7681, "ENEMIGO2.txt");
+  //INICIALIZACION DE BOTONES DE PRUEBA
+  pinMode(PUSH1, INPUT_PULLUP);
+  pinMode(PUSH2, INPUT_PULLUP);
 
-//openSDformat(titulo1, 52103, "TITULO1.txt");
-//openSDformat(titulo2, 48071, "TITULO2.txt");
+  // Botones
+  pinMode (B1_1, INPUT_PULLUP);
+  pinMode (B2_1, INPUT_PULLUP);
+  pinMode (B1_2, INPUT_PULLUP);
+  pinMode (B2_2, INPUT_PULLUP);
 
-  //ELEMENTOS EN LA PANTALLA
 
-  FillRect(0, 0, 319, 120, 0x421b);
-  String text1 = "Star Wars!";
-  //LCD_Print(text1, 20, 75, 2, 0xffff, 0x421b);
-  //LCD_Bitmap(100, 20, 239, 109, titulo1);
-  //LCD_Bitmap(100, 20, , , titulo2);
-  //LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[],int columns, int index, char flip, char offset);
-  //LCD_Sprite(20, 150, 20, 34, prueba, 9, 0, 1, 0);
-
-  //LCD_Bitmap(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned char bitmap[]);
-
-  //LCD_Bitmap(20, 190, 180, 34, padawan1_salto);
-  //LCD_Bitmap(20, 190, 96, 40, enemigo2);
 
 }
 //***************************************************************************************************************************************
 // Loop Infinito
 //***************************************************************************************************************************************
 void loop() {
-
-  //salto(padawan2_salto);
-  //ataque_enemigo1();
-  //ataque_enemigo2();
-
-}
-//***************************************************************************************************************************************
-// Movimientos
-//***************************************************************************************************************************************
-
-void salto(unsigned char personaje[12240]) {
-  h = 150;
-  switch (anim) {
+  switch (modo) {
     case 0:
-      anim++;
-      h = 150;
+      E1();   //CORRESPONDE AL ESTADO DE LA PANTALLA DE INICIO
       break;
     case 1:
-      anim++;
-      h = 135;
+      E2();   //CORRESPONDE AL ESTADO DEL MENU PRINCIPAL
       break;
     case 2:
-      anim++;
-      h = 125;
+      E3();  //CORRESPONDE AL ESTADO DE SELECCION DE PERSONAJES
       break;
     case 3:
-      anim++;
-      h = 120;
+      E4();   //CORRESPONDE AL ESTADO DE LA EJECUCION DEL JUEGO
       break;
+  }
+
+}
+
+//***************************************************************************************************************************************
+//FUNCIONES DE ESTADOS
+//***************************************************************************************************************************************
+
+void E1(void) {
+  mostrar_pantalla_inicio();
+
+  //CONDICION PARA PODER AVANZAR AL SIGUIENTE ESTADO
+  if (!digitalRead(PUSH1)) {
+    modo = 1;
+    one_time = 1;
+  }
+}
+
+void E2(void) {
+  mostrar_menu_principal();
+
+  //CONDICION PARA PODER MOVER EL SELECCIONADOR
+  if (!digitalRead(PUSH2)) {
+    seleccionador++;
+    mover_seleccionador();
+  }
+
+  //CONDICIONES PARA PODER ESCOGER EL ESTADO A CUAL IR
+  if ((!digitalRead(PUSH1)) && (seleccionador == 1)) {
+    modo = 2;   //SE MUEVE AL MENU PARA SELECCIONAR JUGADOR
+    one_time = 1;
+  }
+  if ((!digitalRead(PUSH1)) && (seleccionador == 2)) {
+    modo = 0;   //REGRESA AL MENU PRINCIPAL
+    one_time = 1;
+  }
+  if ((!digitalRead(PUSH1)) && (seleccionador == 3)) {
+    modo = 3;   //SE MUEVE HACIA EL JUEGO
+    one_time = 1;
+  }
+}
+
+void E3(void) {
+mostrar_seleccion_jugador();
+seleccion_jugador();
+  
+}
+
+void E4(void) {
+  mostrar_pantalla_juego();
+}
+
+//***************************************************************************************************************************************
+//FUNCIONES PARA DESPLEGAR IMAGENES DE LA SD
+//***************************************************************************************************************************************
+
+/*EN ESTAS FUNCIONES SE CREAN VECTORES COMO VARIABLES LOCALES Y SE LLENAN DE LA INFORMACION PARA CREAR LA IMAGEN, LA CUAL FUE GUARDADA EN
+LA SD. ESTO SE EFECTUA DE LA SIGUIENTE MANERA PARA AHORRAR ESPACION EN LA MEMEORIA RAM.
+*/
+
+//MUESTRA EL T1 EN LA PANTALLA DE INICIO
+void obtener_titulo1(void) {
+  unsigned char titulo1[11000] = {0};
+  openSDformat(titulo1, 11001, "TITULO1.txt");
+  LCD_Bitmap(100, 30, 110, 50, titulo1);
+  one_time = 0;
+}
+
+//MUESTRA EL T2 EN LA PANTALLA DE INICIO
+void obtener_titulo2(void) {
+  unsigned char titulo2[13034] = {0};
+  openSDformat(titulo2, 13035, "TITULO2.txt");
+  LCD_Bitmap(80, 100, 133, 49, titulo2);
+  one_time = 0;
+}
+
+//MUESTRA EL T1 EN LA PANTALLA DE SELECCION DEL JUGADOR
+void obtener_titulo1_2(void) {
+  unsigned char titulo1[11000] = {0};
+  openSDformat(titulo1, 11001, "TITULO1.txt");
+  LCD_Bitmap(105, 5, 110, 50, titulo1);
+  
+}
+//***************************************************************************************************************************************
+//FUNCIONES PARA MOSTRAR PANTALLAS
+//***************************************************************************************************************************************
+void mostrar_pantalla_inicio(void) {
+  if (one_time == 1) {
+    LCD_Clear(0x00);
+
+    text1 = "PRESS ANY BUTTON TO START";
+    LCD_Print(text1, 50, 170, 1, 0xffff, 0x00);
+
+    obtener_titulo1();
+    obtener_titulo2();
+
+    one_time = 0;
+  } else if (one_time == 0) {
+    text1 = "PRESS ANY BUTTON TO START";
+    if (parpadeo == 1) {
+      LCD_Print(text1, 50, 170, 1, 0xffff, 0x00);
+      parpadeo = 0;
+    } else if (parpadeo == 0) {
+      LCD_Print(text1, 50, 170, 1, 0x00, 0x00);   //SE CAMBIA EL COLOR DEL TEXTO AL MISMO DEL FONDO
+      parpadeo = 1;
+    }
+    delay(500);
+  }
+}
+
+void mostrar_menu_principal(void) {
+
+  if (one_time == 1) {
+
+    LCD_Clear(0x00);
+    text1 = "MENU PRINCIPAL";
+    LCD_Print(text1, 40, 15, 2, 0xffff, 0x00);
+
+    text2 = "Seleccion de personaje";
+    LCD_Print(text2, 70, 70, 1, 0xffff, 0x3176);
+
+    text3 = "Volver a pantalla de inicio";
+    LCD_Print(text3, 50, 110, 1, 0xffff, 0x00);
+
+    text4 = "Jugar";
+    LCD_Print(text4, 130, 150, 1, 0xffff, 0x00);
+
+    one_time = 0;
+  } else if (one_time == 0) {
+    delay(1);
+  }
+
+}
+
+void mostrar_seleccion_jugador(void){
+  LCD_Clear(0x00);
+  //LCD_Bitmap(105, 5, 110, 50, titulo1); //TITULO DE STAR WARS
+  obtener_titulo1_2();
+  
+  text1 = "Select a lightsaber";
+  LCD_Print(text1, 8, 70, 2, 0xffe7, 0x0000);
+  LCD_Bitmap(54, 110, 19, 24, padawan1);
+  LCD_Bitmap(120, 110, 19, 24, padawan2);
+  LCD_Bitmap(186, 110, 19, 24, padawan3);
+  LCD_Bitmap(252, 110, 19, 24, padawan4); // COLOCA LOS PADAWAN DE DIFERENTES ESPADAS
+  text2 = "P1";
+  text3 = "P2";
+  LCD_Print(text2, 45, 140, 2, 0x7800, 0x0000);
+  LCD_Print(text3, 45, 165, 2, 0x000a, 0x0000);
+}
+
+void mostrar_pantalla_juego(void) {
+  if (one_time == 1) {
+    for (int x = 0; x < 319; x++) {     // ESTRELLAS
+      LCD_Bitmap(x, 0, 40, 40, fondo);
+      LCD_Bitmap(x, 40, 40, 40, fondo);
+      LCD_Bitmap(x, 80, 40, 40, fondo);
+      LCD_Bitmap(x, 120, 40, 40, fondo);
+      LCD_Bitmap(x, 160, 40, 40, fondo);
+      LCD_Bitmap(x, 200, 40, 40, fondo);
+      x += 39;//PINTA EL GRID
+    }
+    FillRect(0, 170, 320, 240, 0xffff);   // SUPERFICIE BLANCA
+    one_time = 0;
+
+  } else if (one_time == 0) {
+    delay(1);
+  }
+
+}
+
+//***************************************************************************************************************************************
+//FUNCION PARA MOVER EL CURSOR DE SELECCION
+//***************************************************************************************************************************************
+void mover_seleccionador(void) {
+  switch (seleccionador) {
+    case 1:
+      LCD_Print(text2, 70, 70, 1, 0xffff, 0x3176);
+      LCD_Print(text3, 50, 110, 1, 0xffff, 0x00);
+      LCD_Print(text4, 130, 150, 1, 0xffff, 0x00);
+      break;
+
+    case 2:
+      LCD_Print(text2, 70, 70, 1, 0xffff, 0x00);
+      LCD_Print(text3, 50, 110, 1, 0xffff, 0x3176);
+      LCD_Print(text4, 130, 150, 1, 0xffff, 0x00);
+      break;
+
+    case 3:
+      LCD_Print(text2, 70, 70, 1, 0xffff, 0x00);
+      LCD_Print(text3, 50, 110, 1, 0xffff, 0x00);
+      LCD_Print(text4, 130, 150, 1, 0xffff, 0x3176);
+      break;
+
     case 4:
-      anim++;
-      h = 125;
+      seleccionador = 0;
       break;
-    case 5:
-      anim++;
-      h = 135;
-      break;
-    case 6:
-      anim++;
-      h = 150;
-      break;
-    case 7:
-      anim++;
-      h = 150;
-      break;
-    case 8:
-      anim = 0;
-      h = 150;
-      break;
-  }
-  LCD_Sprite(20, h, 20, 34, personaje, 9, anim, 0, 0);
-  delay(100);
-  FillRect(20, h - 1, 20, 15, 0x00);
-  FillRect(20, h + 16, 20, 15, 0x00);
 
-}
-
-void ataque_enemigo1(void) {
-  int paso = 5;
-  int posicion_y = 100;
-  int altura = 22;
-  int ancho = 30;
-
-  if (x_e1 == 280) {
-    x_e1 = 0;
-  } else {
-    x_e1 = x_e1 + paso;
-    delay(1);
-    int anim2 = (x_e1 / 5) % 2;
-    LCD_Sprite(x_e1, posicion_y, ancho, altura, enemigo1, 2, anim2, 0, 0);
-    FillRect(x_e1 - paso, posicion_y, paso, altura, 0x00);
   }
 
 }
 
-void ataque_enemigo2(void) {
-  int paso = 5;
-  int posicion_y = 50;
-  int altura = 40;
-  int ancho = 32;
+void seleccion_jugador(void){
+  int rebote1 = 0;
+  int rebote2 = 0;
+  int rebote3 = 0;
+  int rebote4 = 0;
+  int jugador1 = 0;
+  int jugador2 = 0;
+  
+  while(modo==2){   // Sustituir el 1 por el estado(modo) en que se encuentre
+    //45, 111, 178, 244 ---- 66
+    // Jugador 1
+    if(digitalRead(B1_1) == LOW){
+      rebote1 = 1;  // Variable para antirrebote
+    }
+    
+    if((digitalRead(B1_1) == HIGH) && (rebote1 == 1)){
+      rebote1 = 0;
+      jugador1++;
+      for(int i = 45; i < 45+66*jugador1; i++){
+        V_line(i, 140, 15, 0x0000);
+      }
+      if(jugador1 == 4){
+        jugador1 = 0;
+      }
+      LCD_Print(text2, 45+66*jugador1, 140, 2, 0x7800, 0x0000);
+    }
 
-  if (x_e2 == 280) {
-    x_e2 = 0;
-  } else {
-    x_e2 = x_e2 + paso;
-    delay(1);
-    int anim3 = (x_e2 / 5) % 3;
-    LCD_Sprite(x_e2, posicion_y, ancho, altura, enemigo2, 3, anim3, 0, 0);
-    FillRect(x_e2 - paso, posicion_y, paso, altura, 0x00);
+    // Jugador 2
+    if(digitalRead(B1_2) == LOW){
+      rebote2 = 1;  // Variable para antirrebote
+    }
+    
+    if((digitalRead(B1_2) == HIGH) && (rebote2 == 1)){
+      rebote2 = 0;
+      jugador2++;
+      for(int i = 45; i < 45+66*jugador2; i++){
+        V_line(i, 165, 15, 0x0000);
+      }
+      if(jugador2 == 4){
+        jugador2 = 0;
+      }
+      LCD_Print(text3, 45+66*jugador2, 165, 2, 0x000a, 0x0000);
+    }
   }
-
 }
 
 //***************************************************************************************************************************************
@@ -598,7 +768,7 @@ void openSDformat(unsigned char L[], unsigned long SIZE, char* a) {
   dataFile.close();                       // Se cierra archivo.
 }
 //***************************************************************************************************************************************
-// TRANSFORMAR 
+// TRANSFORMAR
 //***************************************************************************************************************************************
 int ACII_HEX(char *puntero) {
   int i = 0;
@@ -642,4 +812,4 @@ void printDirectory(File dir, int numTabs) {
     }
     entry.close();
   }
-} 
+}
