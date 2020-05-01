@@ -3,7 +3,10 @@
    Basado en el código de martinayotte - https://www.stm32duino.com/viewtopic.php?t=637
    Adaptación, migración y creación de nuevas funciones: Pablo Mazariegos y José Morales
    Con ayuda de: José Guerra
-   IE3027: Electrónica Digital 2 - 2019
+   IE3027: Electrónica Digital 2 - 2020
+   Daniela Balidzon
+   José Pellecer
+   Juego de Star Wars
 */
 
 //***************************************************************************************************************************************
