@@ -5,6 +5,7 @@
    Con ayuda de: José Guerra
    IE3027: Electrónica Digital 2 - 2019
 */
+
 //***************************************************************************************************************************************
 #include <stdint.h>
 #include <stdbool.h>
@@ -34,8 +35,8 @@
 int DPINS[] = {PB_0, PB_1, PB_2, PB_3, PB_4, PB_5, PB_6, PB_7};
 
 //DEFINICION DE BOTONES DE PRUEBA
-#define PUSH1  PF_4 //SW1
-#define PUSH2  PF_0 //SW2
+//#define PUSH1  PF_4 //SW1
+//#define PUSH2  PF_0 //SW2
 
 #define B1_1 PA_6 // Boton 1 jugador 1
 #define B2_1 PA_7 // Boton 2 jugador 1
@@ -68,6 +69,7 @@ void E1(void);
 void E2(void);
 void E3(void);
 void E4(void);
+void E5(void);
 
 //FUNCIONES PARA DESPLEGAR IMAGENES DE LA SD
 void obtener_titulo1(void);
@@ -110,18 +112,10 @@ int jugador1 = 0; // Estas variables indican el sable que se selecciona
 int jugador2 = 0;
 
 //PANTALLA DE JUEGO
-//JUGADORES
-char p1 = 0;
-char p2 = 1;   //ESTAS SON LAS OPCIONES DEFAULT DEL JUEGO
 char ganador = 0;
-
-
-
-
 
 //RUTA PARA SD
 File root;
-
 
 //***************************************************************************************************************************************
 // Inicialización
@@ -162,7 +156,9 @@ void setup() {
   pinMode (B1_2, INPUT_PULLUP);
   pinMode (B2_2, INPUT_PULLUP);
 
-
+  // Pines para comunicacion con arduino
+  pinMode(PC_4, OUTPUT); // bit 0
+  pinMode(PC_5, OUTPUT); // bit 1
 
 }
 //***************************************************************************************************************************************
@@ -182,8 +178,10 @@ void loop() {
     case 3:
       E4();   //CORRESPONDE AL ESTADO DE LA EJECUCION DEL JUEGO
       break;
+    case 4:   //PANTALLA DE GANADOR
+      E5();
+      break;
   }
-
 }
 
 //***************************************************************************************************************************************
@@ -191,50 +189,103 @@ void loop() {
 //***************************************************************************************************************************************
 
 void E1(void) {
+  // THEME
+  digitalWrite(PC_4, LOW);
+  digitalWrite(PC_5, LOW);
   mostrar_pantalla_inicio();
 
   //CONDICION PARA PODER AVANZAR AL SIGUIENTE ESTADO
-  if (!digitalRead(PUSH1) || !digitalRead(PUSH2) || !digitalRead(B1_2) || !digitalRead(B2_2)) {
+  if (!digitalRead(B1_1) || !digitalRead(B2_1) || !digitalRead(B1_2) || !digitalRead(B2_2)) {
     modo = 1;
     one_time = 1;
   }
 }
 
 void E2(void) {
+  // IMPERIAL
+  digitalWrite(PC_4, HIGH);
+  digitalWrite(PC_5, LOW);
   mostrar_menu_principal();
 
   //CONDICION PARA PODER MOVER EL SELECCIONADOR
-  if (!digitalRead(PUSH2)) {
+  if (!digitalRead(B2_1)) {
     seleccionador++;
     mover_seleccionador();
   }
 
   //CONDICIONES PARA PODER ESCOGER EL ESTADO A CUAL IR
-  if ((!digitalRead(PUSH1)) && (seleccionador == 1)) {
+  if ((!digitalRead(B1_1)) && (seleccionador == 1)) {
     modo = 2;   //SE MUEVE AL MENU PARA SELECCIONAR JUGADOR
     one_time = 1;
   }
-  if ((!digitalRead(PUSH1)) && (seleccionador == 2)) {
+  if ((!digitalRead(B1_1)) && (seleccionador == 2)) {
     modo = 0;   //REGRESA AL MENU PRINCIPAL
     one_time = 1;
   }
-  if ((!digitalRead(PUSH1)) && (seleccionador == 3)) {
+  if ((!digitalRead(B1_1)) && (seleccionador == 3)) {
     modo = 3;   //SE MUEVE HACIA EL JUEGO
     one_time = 1;
   }
 }
 
 void E3(void) {
+  //APPROACH
+  digitalWrite(PC_4, HIGH);
+  digitalWrite(PC_5, HIGH);
   mostrar_seleccion_jugador();
   seleccion_jugador();
 
 }
 
 void E4(void) {
+  // BATTLE
+  digitalWrite(PC_4, LOW);
+  digitalWrite(PC_5, HIGH);
   mostrar_pantalla_juego();
   juego();
 }
 
+void E5(void) {
+  switch(ganador){
+    case 0:
+      FillRect(0, 0, 320, 240, 0x0180);
+      LCD_Print("TIE",140, 105, 2, 0x0000, 0x0180);
+      while(modo == 4){  
+       LCD_Print("PRESS ANY BUTTON TO CONTINUE",50, 170, 1, 0x0000, 0x0180);
+       //CONDICION PARA PODER AVANZAR AL SIGUIENTE ESTADO
+        if (!digitalRead(PUSH1) || !digitalRead(PUSH2) || !digitalRead(B1_2) || !digitalRead(B2_2)) {
+            modo = 1;
+            one_time = 1;
+        }
+      }
+      break;
+    case 1:
+      FillRect(0, 0, 320, 240, 0x7800);
+      LCD_Print("P1 WINS",110, 105, 2, 0x0000, 0x7800);
+      while(modo == 4){          
+        LCD_Print("PRESS ANY BUTTON TO CONTINUE",50, 170, 1, 0x0000, 0x7800);
+       //CONDICION PARA PODER AVANZAR AL SIGUIENTE ESTADO
+        if (!digitalRead(PUSH1) || !digitalRead(PUSH2) || !digitalRead(B1_2) || !digitalRead(B2_2)) {
+            modo = 1;
+            one_time = 1;
+        }
+      }
+      break;
+    case 2:
+      FillRect(0, 0, 320, 240, 0x000a);
+      LCD_Print("P2 WINS",110, 105, 2, 0x0000, 0x000a);
+      while(modo == 4){        
+        LCD_Print("PRESS ANY BUTTON TO CONTINUE",50, 170, 1, 0x0000, 0x000a);
+        //CONDICION PARA PODER AVANZAR AL SIGUIENTE ESTADO
+        if (!digitalRead(B1_1) || !digitalRead(B2_1) || !digitalRead(B1_2) || !digitalRead(B2_2)) {
+            modo = 1;
+            one_time = 1;
+        }
+      }
+      break;
+  }
+ 
+}
 //***************************************************************************************************************************************
 //FUNCIONES PARA DESPLEGAR IMAGENES DE LA SD
 //***************************************************************************************************************************************
@@ -270,27 +321,60 @@ void obtener_titulo1_2(void) {
 // Función para el juego
 //***************************************************************************************************************************************
 void juego(void) {
-  unsigned char p1_salto[2720], p2_salto[2720], p1_ataque[3264], p2_ataque[3264];
+  unsigned char p1_salto[2720], p2_salto[2720], p1_ataque[3264], p2_ataque[3264], enemigo1[1120], enemigo2[3920];
   ganador = 0;
   bool mantener_salto_p1 = false;
   bool mantener_ataque_p1 = false;
   bool mantener_salto_p2 = false;
   bool mantener_ataque_p2 = false;
-  uint8_t anim_salto_p1=0;
-  uint8_t anim_ataque_p1=0;
-  uint8_t anim_salto_p2=0;
-  uint8_t anim_ataque_p2=0;
-  uint8_t x1 = 190;
-  uint8_t x2 = 130;
-  uint8_t h1 = 135;
-  uint8_t h2 = 135;
-  uint8_t y1 = 0;
-  uint8_t y2 = 0;
-  uint8_t w = 0;
+  uint8_t anim_salto_p1 = 0;
+  uint8_t anim_ataque_p1 = 0;
+  uint8_t anim_salto_p2 = 0;
+  uint8_t anim_ataque_p2 = 0;
+  uint8_t x1 = 190;   //POSICION DE PLAYER1
+  uint8_t x2 = 130;   //POSICION DE PLAYER2
+  uint8_t h1 = 135;   //ALTURA DE PLAYER1
+  uint8_t h2 = 135;   //ALTURA DE PLAYER2
+  uint8_t y1 = 0;     //VARIABLE PARA CONTROLAR SALTO DE PLAYER1
+  uint8_t y2 = 0;     //VARIABLE PARA CONTROLAR SALTO DE PLAYER2
+  uint8_t pj1 = 0;    //CONTADOR DE LOS PUNTOS DEL JUGADOR 1
+  uint8_t pj2 = 0;    //CONTADOR DE PUNTOS DE JUGADOR 2
+  uint8_t choque1 = 0;
+  uint8_t choque2 = 0;
+  uint8_t choque3 = 0;
+  uint8_t choque4 = 0;
 
-  //obtener_p1();
-  //obtener_p2();
-  switch (p1) {
+  //----VARIABLES DE ENEMIGOS-----
+  uint8_t enemigo;
+  enemigo = random(1, 5);     // Eleccion de un enemigo aleatorio
+  bool enemigo_done = false;  // Indicador de que el enemigo llegó al final de su trayectoria
+
+  uint8_t paso = 3;
+  uint8_t y_e1 = 140;
+  int x_e1_p1 = 319 ;   // Coordenada x del enemigo 1 del jugador 1
+  uint8_t x_e1_p2 = 0;  // Coordenada x del enemigo 2 del jugador 2
+
+  uint8_t paso2 = 2;
+  uint8_t y_e2 = 130;
+  int x_e2_p1 = 290 ;   // Coordenada x del enemigo 2 del jugador 1
+  uint8_t x_e2_p2 = 0;  // Coordenada x del enemigo 2 del jugador 2
+
+
+  //----VARIABLES DE TIEMPO-----
+  unsigned long t_actual1 = millis();
+  unsigned long delay_salto1 = 200;
+  unsigned long t_actual2 = millis();
+  unsigned long delay_salto2 = 200;
+
+  openSDformat(enemigo1, 1121, "ENEMIGO1.txt");
+  openSDformat(enemigo2, 3921, "ENEMIGO2.txt");
+
+  if(jugador1 == jugador2){ // Si no se selecciono ningun jugador
+    jugador1 = 0;
+    jugador2 = 1;
+  }
+
+  switch (jugador1) {
     case 0:
       openSDformat(p1_salto, 2721, "P1S.txt");
       openSDformat(p1_ataque, 3265, "P1A.txt");
@@ -308,7 +392,7 @@ void juego(void) {
       openSDformat(p1_ataque, 3265, "P4A.txt");
       break;
   }
-  switch (p2) {
+  switch (jugador2) {
     case 0:
       openSDformat(p2_salto, 2721, "P1S.txt");
       openSDformat(p2_ataque, 3265, "P1A.txt");
@@ -331,120 +415,327 @@ void juego(void) {
   //LCD_Sprite(x2, 135, 24, 34, p2_ataque, 2, 0, 1, 0);
   //LCD_Sprite(x2, 135, 20, 34, p2_salto, 2, 0, 1, 0);
   while (modo == 3) {
-//------------------------CONDICIONES DE LOS BOTONES---------------------
-//PLAYER1
-    if (!digitalRead(PUSH1)) {
+    //------------------------CONDICIONES DE LOS BOTONES---------------------
+    //PLAYER1
+    if (!digitalRead(B1_1)) {
       mantener_salto_p1 = true;
+      t_actual1 = millis();
     }
-    if (!digitalRead(PUSH2)) {
+    if (!digitalRead(B2_1)) {
       mantener_ataque_p1 = true;
+      t_actual1 = millis();
     }
-//PLAYER2 (AHORITE SE PRUEBA CON LOS BOTONES DE LA TIVA)
-    if (!digitalRead(PUSH1)) {
+    //PLAYER2 (AHORITE SE PRUEBA CON LOS BOTONES DE LA TIVA)
+    if (!digitalRead(B1_2)) {
       mantener_salto_p2 = true;
+      t_actual2 = millis();
     }
-    if (!digitalRead(PUSH2)) {
+    if (!digitalRead(B2_2)) {
       mantener_ataque_p2 = true;
+      t_actual2 = millis();
     }
 
-//-----------------EJECUCION DE MOVIMIENTOS DE PLAYER1-------------------
+    //-----------------EJECUCION DE MOVIMIENTOS DE PLAYER1-------------------
     if (mantener_salto_p1 == true) {
-      switch (y1) {
-        case 0:
-          y1++;
-          anim_salto_p1=1;
-          h1 = h1 - 30;
-          FillRect(x1, h1 + 31, 20, 30, 0x00);
-          break;
-        case 1:
-          y1++;
-          anim_salto_p1=1;
-          h1 = h1 - 15;
-          FillRect(x1, h1 + 16, 20, 17, 0x00);
-          break;
-        case 2:
-          y1++;
-          anim_salto_p1=1;
-          h1 = h1 + 15;
-          break;
-        case 3:
-          y1=0;
-          h1 = h1 + 30;
-          anim_salto_p1 = 0;
-          mantener_salto_p1 = false;
-          break;
+
+      if (millis() > t_actual1 + delay_salto1 ) {
+
+        switch (y1) {
+          case 0:
+            y1++;
+            anim_salto_p1 = 1;
+            h1 = h1 - 30;
+            FillRect(x1, h1 + 31, 20, 30, 0x00);
+            break;
+          case 1:
+            y1++;
+            anim_salto_p1 = 1;
+            h1 = h1 - 15;
+            FillRect(x1, h1 + 31, 20, 30, 0x00);
+            break;
+          case 2:
+            y1++;
+            anim_salto_p1 = 1;
+            h1 = h1 + 15;
+            FillRect(x1, h1 - 30, 20, 30, 0x00);
+            break;
+          case 3:
+            y1 = 0;
+            h1 = h1 + 30;
+            FillRect(x1, h1 - 30, 20, 30, 0x00);
+            anim_salto_p1 = 0;
+            mantener_salto_p1 = false;
+            break;
+        }
+        LCD_Sprite(x1, h1, 20, 34, p1_salto, 2, anim_salto_p1, 0, 0);
+        t_actual1 = millis();
       }
-      LCD_Sprite(x1, h1, 20, 34, p1_salto, 2, anim_salto_p1, 0, 0);
-      delay(150);
-      FillRect(x1, h1 - 1, 20, 30, 0x00);
-      
     }
+
     if (mantener_ataque_p1 == true) {
-      switch (anim_ataque_p1) {
-        case 0:
-          anim_ataque_p1++;
-          break;
-        case 1:
-          anim_ataque_p1 = 0;
-          mantener_ataque_p1 = false;
-          break;
+      if (millis() > t_actual1 + (2 * delay_salto1) ) {
+        switch (anim_ataque_p1) {
+          case 0:
+            anim_ataque_p1++;
+            break;
+          case 1:
+            anim_ataque_p1 = 0;
+            mantener_ataque_p1 = false;
+            break;
+        }
+        LCD_Sprite(x1, h1, 24, 34, p1_ataque, 2, anim_ataque_p1, 0, 0);
+        FillRect(x1+20, h1+20, 4,5, 0x0000);
+        t_actual1 = millis();
       }
-      LCD_Sprite(x1, h1, 24, 34, p1_ataque, 2, anim_ataque_p1, 0, 0);
-      delay(300);
     }
+
     if ((mantener_salto_p1 == false) && (mantener_ataque_p1 == false)) {
       LCD_Sprite(x1, h1, 20, 34, p1_salto, 2, 0, 0, 0);
       //LCD_Sprite(x1, h1, 24, 34, p1_ataque, 2, 0, 0, 0);
     }
 
-//-----------------EJECUCION DE MOVIMIENTOS DE PLAYER2-------------------
+    //-----------------EJECUCION DE MOVIMIENTOS DE PLAYER2-------------------
     if (mantener_salto_p2 == true) {
-      switch (y2) {
-        case 0:
-          y2++;
-          anim_salto_p2=1;
-          h2 = h2 - 30;
-          FillRect(x2, h2 + 31, 20, 30, 0x00);
-          break;
-        case 1:
-          y2++;
-          anim_salto_p2=1;
-          h2 = h2 - 15;
-          FillRect(x2, h2 + 16, 20, 17, 0x00);
-          break;
-        case 2:
-          y2++;
-          anim_salto_p2=1;
-          h2 = h2 + 15;
-          break;
-        case 3:
-          y2=0;
-          h2 = h2 + 30;
-          anim_salto_p2 = 0;
-          mantener_salto_p2 = false;
-          break;
+      if (millis() > t_actual2 + delay_salto2 ) {
+        switch (y2) {
+          case 0:
+            y2++;
+            anim_salto_p2 = 1;
+            h2 = h2 - 30;
+            FillRect(x2, h2 + 31, 20, 30, 0x00);
+            break;
+          case 1:
+            y2++;
+            anim_salto_p2 = 1;
+            h2 = h2 - 15;
+            FillRect(x2, h2 + 32, 20, 17, 0x00);
+            break;
+          case 2:
+            y2++;
+            anim_salto_p2 = 1;
+            h2 = h2 + 15;
+            FillRect(x2, h2 - 30, 20, 30, 0x00);
+            break;
+          case 3:
+            y2 = 0;
+            h2 = h2 + 30;
+            FillRect(x2, h2 - 30, 20, 30, 0x00);
+            anim_salto_p2 = 0;
+            mantener_salto_p2 = false;
+            break;
+        }
+        LCD_Sprite(x2, h2, 20, 34, p2_salto, 2, anim_salto_p2, 1, 0);
+        t_actual2 = millis();
       }
-      LCD_Sprite(x2, h2, 20, 34, p2_salto, 2, anim_salto_p2, 1, 0);
-      delay(150);
-      FillRect(x2, h2 - 1, 20, 30, 0x00);
-      
     }
+
+
     if (mantener_ataque_p2 == true) {
-      switch (anim_ataque_p2) {
-        case 0:
-          anim_ataque_p2++;
-          break;
-        case 1:
-          anim_ataque_p2 = 0;
-          mantener_ataque_p2 = false;
-          break;
+      if (millis() > t_actual2 + (2 * delay_salto2) ) {
+        switch (anim_ataque_p2) {
+          case 0:
+            anim_ataque_p2++;
+            break;
+          case 1:
+            anim_ataque_p2 = 0;
+            mantener_ataque_p2 = false;
+            break;
+        }
+        LCD_Sprite(x2, h2, 24, 34, p2_ataque, 2, anim_ataque_p2, 1, 0);
+        FillRect(x2+20, h2+20, 4,3, 0x0000);
+        t_actual2 = millis();
       }
-      LCD_Sprite(x2, h2, 24, 34, p2_ataque, 2, anim_ataque_p2, 1, 0);
-      delay(300);
     }
+
     if ((mantener_salto_p2 == false) && (mantener_ataque_p2 == false)) {
       LCD_Sprite(x2, h2, 20, 34, p2_salto, 2, 0, 1, 0);
       //LCD_Sprite(x2, h2, 24, 34, p2_ataque, 2, 0, 1, 0);
+    }
+
+    //----------------------------ENEMIGOS---------------------------------------
+
+    if (enemigo_done == false) {
+      switch (enemigo) {
+        case 1:
+          if(choque2 == 0){
+            if (x_e1_p2 > 150) {
+              x_e1_p2 = 0;
+              FillRect(150, y_e1, 20, 14, 0x00);
+              enemigo_done = true;
+            }
+            else {
+              x_e1_p2 = x_e1_p2 + paso;
+              delay(1);
+              int anim_e1_p2 = (x_e1_p2 / 25) % 2;
+              LCD_Sprite(x_e1_p2, y_e1, 20, 14, enemigo1, 2, anim_e1_p2, 0, 0);
+              FillRect(x_e1_p2 - paso, y_e1, paso, 14, 0x00);
+            }
+          }
+          else{
+            FillRect(x_e1_p2, y_e1, 20, 14, 0x00);
+            choque2 = 0;
+            x_e1_p2 = 0;
+            enemigo_done = true;
+          }
+          break;
+        case 2:
+          if(choque1 == 0){
+            if (x_e1_p1 < 170) {
+              x_e1_p1 = 319;
+              FillRect(170, y_e1, 20, 14, 0x00);
+              enemigo_done = true;
+            }
+            else {
+              x_e1_p1 = x_e1_p1 - paso;
+              delay(1);
+              int anim_e1_p1 = (x_e1_p1 / 25) % 2;
+              LCD_Sprite(x_e1_p1, y_e1, 20, 14, enemigo1, 2, anim_e1_p1, 1, 0);
+              //FillRect(x_e1_p1+20, y_e1, paso, 14, 0x00);
+            }
+          }
+          else{
+            FillRect(x_e1_p1, y_e1, 20, 14, 0x00);
+            choque1 = 0;
+            x_e1_p1 = 319;
+            enemigo_done = true;
+          }
+          break;
+        case 3:
+          if(choque4 == 0){
+            if (x_e2_p2 > x2-15) {
+              x_e2_p2 = 0;
+              FillRect(x2-15, y_e2, 28, 35, 0x00);
+              enemigo_done = true;
+              pj2++;
+            }
+            else {
+              x_e2_p2 = x_e2_p2 + paso2;
+              delay(2);
+              int anim_e2_p2 = (x_e2_p2 / 20) % 2;
+              LCD_Sprite(x_e2_p2, y_e2, 28, 35, enemigo2, 2, anim_e2_p2, 0, 0);
+              FillRect(x_e2_p2 - paso, y_e2, paso2, 35, 0x00);
+            }
+          }
+          else{
+            FillRect(x_e2_p2, y_e2, 28, 35, 0x00);
+            choque4 = 0;
+            x_e2_p2 = 0;
+            enemigo_done = true;
+          }
+          break;
+        case 4:
+          if(choque3 == 0){
+            if (x_e2_p1 < x1+15) {
+              x_e2_p1 = 290;
+              FillRect(x1+15, y_e2, 28, 35, 0x00);
+              enemigo_done = true;
+              pj1++;
+            }
+            else {
+              x_e2_p1 = x_e2_p1 - paso2 - 2;
+              delay(1);
+              int anim_e2_p1 = (x_e2_p1 / 30) % 2;
+              LCD_Sprite(x_e2_p1, y_e2, 28, 35, enemigo2, 2, anim_e2_p1, 1, 0);
+              FillRect(x_e2_p1 + 28, y_e2, paso2, 35, 0x00);
+            }
+          }
+          else{
+            FillRect(x_e2_p1, y_e2, 28, 35, 0x00);
+            choque3 = 0;
+            x_e2_p1 = 290;
+            enemigo_done = true;
+          }
+          break;
+      }
+    }else if (enemigo_done == true) {
+      enemigo = random(1, 5);
+      enemigo_done = false;
+    }
+
+    //-----------------------------------Condiciones de choque--------------------------------------------------------------------
+    // Enemigo 1 p1
+    if(x_e1_p1 <= (x1+20) && y_e1 <= (h1+34)){
+      pj1++;
+      choque1 = 1;
+    }
+   
+    // Enemigo 1 p2
+    if(x_e1_p2 >= x2-23 && y_e2 <= (h2+34)){
+      pj2++;
+      choque2 = 1;
+    }
+
+    if(anim_ataque_p1 == 1){
+      if(x_e2_p1 <= x1+24 && x_e2_p1 >= x1+15){
+        choque3 = 1;
+      }
+    }
+
+    if(anim_ataque_p2 == 1){
+      if(x_e2_p2 >= x2-23 && x_e2_p2 <= x2-15){
+        choque4 = 1;
+      }
+    }
+    //------------------------------------------------------MARCADOR------------------------------------------------------------
+    LCD_Print("LIFES:", 15, 190, 2, 0x0280, 0xffff);
+
+    switch(pj2){
+      case 0:
+        LCD_Print("5", 130, 190, 2, 0x000a, 0xffff);
+        break;
+      case 1:
+        LCD_Print("4", 130, 190, 2, 0x000a, 0xffff);
+        break;
+      case 2:
+        LCD_Print("3", 130, 190, 2, 0x000a, 0xffff);
+        break;
+      case 3:
+        LCD_Print("2", 130, 190, 2, 0x000a, 0xffff);
+        break;
+      case 4:
+        LCD_Print("1", 130, 190, 2, 0x000a, 0xffff);
+        break;
+      case 5:
+        LCD_Print("0", 130, 190, 2, 0x000a, 0xffff);
+        break;    
+    }
+    switch(pj1){
+      case 0:
+        LCD_Print("5", 190, 190, 2, 0x7800, 0xffff);
+        break;
+      case 1:
+        LCD_Print("4", 190, 190, 2, 0x7800, 0xffff);
+        break;
+      case 2:
+        LCD_Print("3", 190, 190, 2, 0x7800, 0xffff);
+        break;
+      case 3:
+        LCD_Print("2", 190, 190, 2, 0x7800, 0xffff);
+        break;
+      case 4:
+        LCD_Print("1", 190, 190, 2, 0x7800, 0xffff);
+        break;
+      case 5:
+        LCD_Print("0", 190, 190, 2, 0x7800, 0xffff);
+        break;    
+    }
+    //-------------------------------------------------------GANADOR------------------------------------------------------------
+    if(pj1 == 5 && pj2 == 5){
+      //empates
+      ganador = 0;
+      modo = 4;
+    }
+    else{
+      if(pj1 == 5){
+        // gana p2
+        ganador = 2;
+        modo = 4;
+      }
+      if(pj2 == 5){
+        //gana p1
+        ganador = 1;
+        modo = 4;
+      }
     }
   }
 
@@ -501,7 +792,7 @@ void mostrar_menu_principal(void) {
 
 }
 
-void mostrar_seleccion_jugador(void){
+void mostrar_seleccion_jugador(void) {
   unsigned char padawan1[911] = {0};
   unsigned char padawan2[911] = {0};
   unsigned char padawan3[911] = {0};
@@ -509,7 +800,7 @@ void mostrar_seleccion_jugador(void){
   LCD_Clear(0x00);
   //LCD_Bitmap(105, 5, 110, 50, titulo1); //TITULO DE STAR WARS
   obtener_titulo1_2();
-  
+
   text1 = "Select a lightsaber";
   LCD_Print(text1, 8, 70, 2, 0xffe7, 0x0000);
   openSDformat(padawan1, 912, "P1.txt");
@@ -545,40 +836,6 @@ void mostrar_pantalla_juego(void) {
     delay(1);
   }
 }
-
-/*void mostrar_seleccion_jugador(void) {
-  LCD_Clear(0x00);
-  //LCD_Bitmap(105, 5, 110, 50, titulo1); //TITULO DE STAR WARS
-  obtener_titulo1_2();
-
-  text1 = "Select a lightsaber";
-  LCD_Print(text1, 8, 70, 2, 0xffe7, 0x0000);
-  LCD_Bitmap(54, 110, 19, 24, padawan1);
-  LCD_Bitmap(120, 110, 19, 24, padawan2);
-  LCD_Bitmap(186, 110, 19, 24, padawan3);
-  LCD_Bitmap(252, 110, 19, 24, padawan4); // COLOCA LOS PADAWAN DE DIFERENTES ESPADAS
-  text2 = "P1";
-  text3 = "P2";
-  LCD_Print(text2, 45, 140, 2, 0x7800, 0x0000);
-  LCD_Print(text3, 45, 165, 2, 0x000a, 0x0000);
-}*/
-
-/*void mostrar_pantalla_juego(void) {
-  if (one_time == 1) {
-    for (int x = 0; x < 319; x++) {     // ESTRELLAS
-      LCD_Bitmap(x, 0, 40, 40, fondo);
-      LCD_Bitmap(x, 40, 40, 40, fondo);
-      x += 39;//PINTA EL GRID
-    }
-    FillRect(0, 80, 320, 170, 0x00);   // SUPERFICIE NEGRA
-    FillRect(0, 170, 320, 240, 0xffff);   // SUPERFICIE BLANCA
-
-    one_time = 0;
-
-  }
-
-}*/
-
 //***************************************************************************************************************************************
 //FUNCION PARA MOVER EL CURSOR DE SELECCION
 //***************************************************************************************************************************************
@@ -621,11 +878,11 @@ void seleccion_jugador(void) {
     //45, 111, 178, 244 ---- 66
     // Jugador 1
     // Boton mover jugador
-    if (digitalRead(PUSH1) == LOW) {
+    if (digitalRead(B2_1) == LOW) {
       rebote1 = 1;  // Variable para antirrebote
     }
 
-    if ((digitalRead(PUSH1) == HIGH) && (rebote1 == 1) && !seleccionado1) {
+    if ((digitalRead(B2_1) == HIGH) && (rebote1 == 1) && !seleccionado1) {
       rebote1 = 0;
       jugador1++;
       for (int i = 45; i < 45 + 66 * jugador1; i++) {
@@ -638,11 +895,11 @@ void seleccion_jugador(void) {
     }
 
     // Boton de seleccionar jugador
-    if (digitalRead(PUSH2) == LOW) {
+    if (digitalRead(B1_1) == LOW) {
       rebote3 = 1;
     }
 
-    if (digitalRead(PUSH2) == HIGH && rebote3 == 1) {
+    if (digitalRead(B1_1) == HIGH && rebote3 == 1) {
       rebote3 = 0;
       LCD_Print(text2, 45 + 66 * jugador1, 140, 2, 0x7800, 0xfbae);
       seleccionado1 = 1;
