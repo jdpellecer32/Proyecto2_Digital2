@@ -8,6 +8,8 @@
 //***************************************************************************************************************************************
 #include <stdint.h>
 #include <stdbool.h>
+#include <SPI.h>
+#include <SD.h>
 #include <TM4C123GH6PM.h>
 #include "inc/hw_ints.h"
 #include "inc/hw_memmap.h"
@@ -47,7 +49,11 @@ void LCD_Print(String text, int x, int y, int fontSize, int color, int backgroun
 void LCD_Bitmap(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned char bitmap[]);
 void LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[], int columns, int index, char flip, char offset);
 
-void salto(void);
+void openSDformat(unsigned char L[], unsigned long SIZE, char* a);
+int ACII_HEX(char *puntero);
+void printDirectory(File dir, int numTabs);
+
+void salto(unsigned char personaje[12240]);
 void ataque_enemigo1(void);
 void ataque_enemigo2(void);
 
@@ -55,6 +61,26 @@ void ataque_enemigo2(void);
 //***************************************************************************************************************************************
 // Variables Globales
 //***************************************************************************************************************************************
+//RUTA PARA SD
+File root;
+
+//CREACION DE VECTORES PARA IMAGENES IMPORTADAS DE LA MEMORIA SD
+//unsigned char padawan1_ataque[14688] = {0};
+//unsigned char padawan2_ataque[14688] = {0};
+//unsigned char padawan3_ataque[14688] = {0};
+//unsigned char padawan4_ataque[14688] = {0};
+
+//unsigned char padawan1_salto[12240] = {0};
+//unsigned char padawan2_salto[12240] = {0};
+//unsigned char padawan3_salto[12240] = {0};
+//unsigned char padawan4_salto[12240] = {0};
+
+unsigned char enemigo1[2640] = {0};
+unsigned char enemigo2[7680] = {0};
+
+//unsigned char titulo1[52102] = {0};
+//unsigned char titulo2[48070] = {0};
+
 //Variables de salto
 int anim;
 int h;
@@ -73,31 +99,56 @@ int x_e2 = 0; //este determina la posicion inicial del enemigo 2
 void setup() {
   SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
   Serial.begin(9600);
+  SPI.setModule(0);      // COMUNICACIÓN SPI EN EL MÓDULO 0
   GPIOPadConfigSet(GPIO_PORTB_BASE, 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7, GPIO_STRENGTH_8MA, GPIO_PIN_TYPE_STD_WPU);
   Serial.println("Inicio");
+
+  // INICIALIZACIÓN DE LA PANTALLA
   LCD_Init();
   LCD_Clear(0x00);
 
+  //INICIALIZACION DE LA MEMORIA SD
+ pinMode(10, OUTPUT);
+
+  if (!SD.begin(32)) {
+    Serial.println("initialization failed!");
+    return;
+  }
+  Serial.println("initialization done.");
+
+  root = SD.open("/");
+
+  printDirectory(root, 0);
+
+  Serial.println("done!");
+
+
+//IMAGENES IMPORTADAS DE LA MEMORIA SD
+//openSDformat(padawan1_salto, 12241, "P1S.txt");
+//openSDformat(padawan2_salto, 12241, "P2S.txt");
+//openSDformat(padawan3_salto, 12241, "P3S.txt");
+//openSDformat(padawan4_salto, 12241, "P4S.txt");
+
+//openSDformat(enemigo1, 2641, "ENEMIGO1.txt");
+//openSDformat(enemigo2, 7681, "ENEMIGO2.txt");
+
+//openSDformat(titulo1, 52103, "TITULO1.txt");
+//openSDformat(titulo2, 48071, "TITULO2.txt");
+
+  //ELEMENTOS EN LA PANTALLA
+
   FillRect(0, 0, 319, 120, 0x421b);
   String text1 = "Star Wars!";
-  LCD_Print(text1, 20, 75, 2, 0xffff, 0x421b);
-  // LCD_Bitmap(100, 20, 100, 46, titulo);
+  //LCD_Print(text1, 20, 75, 2, 0xffff, 0x421b);
+  //LCD_Bitmap(100, 20, 239, 109, titulo1);
+  //LCD_Bitmap(100, 20, , , titulo2);
   //LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[],int columns, int index, char flip, char offset);
   //LCD_Sprite(20, 150, 20, 34, prueba, 9, 0, 1, 0);
 
   //LCD_Bitmap(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned char bitmap[]);
 
-  //LCD_Bitmap(20, 190, 180, 34, prueba);
+  //LCD_Bitmap(20, 190, 180, 34, padawan1_salto);
   //LCD_Bitmap(20, 190, 96, 40, enemigo2);
-
-  /* for(int x = 0; x <319; x++){
-     LCD_Bitmap(x, 52, 16, 16, tile2);
-     LCD_Bitmap(x, 68, 16, 16, tile);
-
-     LCD_Bitmap(x, 207, 16, 16, tile);
-     LCD_Bitmap(x, 223, 16, 16, tile);
-     x += 15;
-    }*/
 
 }
 //***************************************************************************************************************************************
@@ -105,68 +156,16 @@ void setup() {
 //***************************************************************************************************************************************
 void loop() {
 
-  salto();
-  ataque_enemigo1();
-  ataque_enemigo2();
-
-
-
-  /*for(int x = 0; x <320-32; x++){
-    delay(15);
-    int anim2 = (x/35)%9;
-
-    //LCD_Sprite(20,190,20,34,prueba,9,anim3,0,0);
-
-    /*LCD_Sprite(x,100,16,24,planta,2,anim2,0,1);
-    V_line( x -1, 100, 24, 0x421b);
-
-    //LCD_Bitmap(x, 100, 32, 32, prueba);
-
-    int anim = (x/11)%8;
-
-
-    int anim3 = (x/11)%4;
-
-    LCD_Sprite(x, 20, 16, 32, mario,8, anim,1, 0);
-    V_line( x -1, 20, 32, 0x421b);
-
-    //LCD_Sprite(x,100,32,32,bowser,4,anim3,0,1);
-    //V_line( x -1, 100, 32, 0x421b);
-
-
-    LCD_Sprite(x, 140, 16, 16, enemy,2, anim2,1, 0);
-    V_line( x -1, 140, 16, 0x421b);
-
-    LCD_Sprite(x, 175, 16, 32, luigi,8, anim,1, 0);
-    V_line( x -1, 175, 32, 0x421b);
-    }
-    for(int x = 320-32; x >0; x--){
-    delay(5);
-    int anim = (x/11)%8;
-    int anim2 = (x/11)%2;
-
-    LCD_Sprite(x,100,16,24,planta,2,anim2,0,0);
-    V_line( x + 16, 100, 24, 0x421b);
-
-    //LCD_Bitmap(x, 100, 32, 32, prueba);
-
-    //LCD_Sprite(x, 140, 16, 16, enemy,2, anim2,0, 0);
-    //V_line( x + 16, 140, 16, 0x421b);
-
-    //LCD_Sprite(x, 175, 16, 32, luigi,8, anim,0, 0);
-    //V_line( x + 16, 175, 32, 0x421b);
-
-    //LCD_Sprite(x, 20, 16, 32, mario,8, anim,0, 0);
-    //V_line( x + 16, 20, 32, 0x421b);
-
-    } */
+  //salto(padawan2_salto);
+  //ataque_enemigo1();
+  //ataque_enemigo2();
 
 }
 //***************************************************************************************************************************************
 // Movimientos
 //***************************************************************************************************************************************
 
-void salto(void) {
+void salto(unsigned char personaje[12240]) {
   h = 150;
   switch (anim) {
     case 0:
@@ -206,7 +205,7 @@ void salto(void) {
       h = 150;
       break;
   }
-  LCD_Sprite(20, h, 20, 34, prueba, 9, anim, 0, 0);
+  LCD_Sprite(20, h, 20, 34, personaje, 9, anim, 0, 0);
   delay(100);
   FillRect(20, h - 1, 20, 15, 0x00);
   FillRect(20, h + 16, 20, 15, 0x00);
@@ -228,12 +227,6 @@ void ataque_enemigo1(void) {
     LCD_Sprite(x_e1, posicion_y, ancho, altura, enemigo1, 2, anim2, 0, 0);
     FillRect(x_e1 - paso, posicion_y, paso, altura, 0x00);
   }
-  /* for(int x = 80; x <320-32; x++){
-     delay(15);
-     int anim2 = (x/15)%2;
-
-     LCD_Sprite(x,150,30,22,enemigo1,2,anim2,0,0);
-    }*/
 
 }
 
@@ -582,3 +575,71 @@ void LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[], int
   }
   digitalWrite(LCD_CS, HIGH);
 }
+
+//***************************************************************************************************************************************
+// Función para leer de la SD y colocarlo dentro de una variable unsigned char
+// FUNCION BRINDADA POR LOS ELECTRÓNICOS
+//***************************************************************************************************************************************
+void openSDformat(unsigned char L[], unsigned long SIZE, char* a) {
+  File dataFile = SD.open(a);     // ABRE EL ARCHIVO SOLICITADO
+  unsigned long i = 0;            //GENERA UN INDICADOR
+  char L_HEX[] = {0, 0};          //HACE UN ARREGLO DE 2 NUMEROS POR POCICION
+  int P2, P1;                     //ASIGNA UNA VARIABLE PARA CADA NUMERO
+  if (dataFile) {                 //SI EXISTE
+    do {
+      L_HEX[0] = dataFile.read(); //LEE
+      P1 = ACII_HEX(L_HEX);       //TRANSOFRMA
+      L_HEX[0] = dataFile.read(); //LEE
+      P2 = ACII_HEX(L_HEX);       //TRANSFORMA
+      L[i] = (P1 << 4) | (P2 & 0xF);  //CONCATENA
+      i++;                        //MUEVE EL INDICADOR
+    } while (i < (SIZE + 1));
+  }
+  dataFile.close();                       // Se cierra archivo.
+}
+//***************************************************************************************************************************************
+// TRANSFORMAR 
+//***************************************************************************************************************************************
+int ACII_HEX(char *puntero) {
+  int i = 0;
+  for (;;) {
+    char num = *puntero;
+    if (num >= '0' && num <= '9') {
+      i *= 16;
+      i += num - '0';
+    }
+    else if (num >= 'a' && num <= 'f') {
+      i *= 16;
+      i += (num - 'a') + 10;
+    }
+    else break;
+    puntero++;
+  }
+  return i;
+}
+//************************************************************************************************
+// DIRECTORIO DE LA SD                                                                           *
+//************************************************************************************************
+void printDirectory(File dir, int numTabs) {
+  while (true) {
+
+    File entry =  dir.openNextFile();
+    if (! entry) {
+      // no more files
+      break;
+    }
+    for (uint8_t i = 0; i < numTabs; i++) {
+      Serial.print('\t');
+    }
+    Serial.print(entry.name());
+    if (entry.isDirectory()) {
+      Serial.println("/");
+      printDirectory(entry, numTabs + 1);
+    } else {
+      // files have sizes, directories do not
+      Serial.print("\t\t");
+      Serial.println(entry.size(), DEC);
+    }
+    entry.close();
+  }
+} 
